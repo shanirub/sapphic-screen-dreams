@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, User } from "lucide-react";
+import { Search } from "lucide-react";
 
 export default function Navbar({ transparent = false }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -45,12 +45,9 @@ export default function Navbar({ transparent = false }) {
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center">
           <Button variant="ghost" size="icon" className="text-foreground/80 hover:text-sapphic-pink">
             <Search className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-foreground/80 hover:text-sapphic-pink">
-            <User className="h-5 w-5" />
           </Button>
         </div>
       </div>
