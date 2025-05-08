@@ -4,22 +4,22 @@ import Navbar from '@/components/Navbar';
 import FeaturedMovie from '@/components/FeaturedMovie';
 import CategoryRow from '@/components/CategoryRow';
 import Footer from '@/components/Footer';
-import { getLatestMovies } from '@/services/tmdb';
+import { getLibraryMovies } from '@/services/tmdb';
 import { Movie } from '@/types/movie';
 
 const Index = () => {
   const [showContent, setShowContent] = useState(false);
   
-  const { data: latestMovies, isLoading } = useQuery({
-    queryKey: ['latestMovies'],
-    queryFn: () => getLatestMovies(),
+  const { data: libraryMovies, isLoading } = useQuery({
+    queryKey: ['libraryMovies'],
+    queryFn: () => getLibraryMovies(),
   });
 
   useEffect(() => {
     setShowContent(true);
   }, []);
 
-  if (isLoading || !latestMovies) {
+  if (isLoading || !libraryMovies) {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <Navbar transparent />
@@ -34,17 +34,20 @@ const Index = () => {
     );
   }
 
-  // Get featured movie (first movie from latest)
-  const featuredMovie = latestMovies.results[0];
+  // Get featured movie (first movie from results)
+  const featuredMovie = libraryMovies.results[0];
   
-  // Get trending movies (movies with rating > 4)
-  const trendingMovies = latestMovies.results.filter(movie => movie.rating > 4);
+  // Get trending movies (next 5 movies)
+  const trendingMovies = libraryMovies.results.slice(1, 6);
   
-  // Get new releases (all latest movies)
-  const newReleases = latestMovies.results;
+  // Get new releases (next 5 movies)
+  const newReleases = libraryMovies.results.slice(6, 11);
   
-  // Get classics (movies older than 5 years)
-  const classics = latestMovies.results.filter(movie => new Date().getFullYear() - movie.year > 5);
+  // Get classics (next 5 movies)
+  const classics = libraryMovies.results.slice(11, 16);
+  
+  // Get recommended movies (next 5 movies)
+  const recommendedMovies = libraryMovies.results.slice(16, 21);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -58,7 +61,7 @@ const Index = () => {
         <CategoryRow title="Trending Now" movies={trendingMovies} />
         <CategoryRow title="New Releases" movies={newReleases} />
         <CategoryRow title="Sapphic Classics" movies={classics} />
-        <CategoryRow title="You Might Like" movies={latestMovies.results.slice(0, 5)} />
+        <CategoryRow title="You Might Like" movies={recommendedMovies} />
       </div>
       
       <Footer />
