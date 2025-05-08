@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -24,7 +23,15 @@ const Search = () => {
 
   const fetchMovies = async ({ queryKey }: { queryKey: [string, string, number] }) => {
     const [_, searchQuery, pageNum] = queryKey;
-    const apiKey = "YOUR_TMDB_API_KEY"; // This should be replaced with a proper API key
+    
+    // Try to get API key from different sources
+    const apiKey = import.meta.env.VITE_TMDB_API_KEY || // Vite env
+                  process.env.TMDB_API_KEY || // GitHub Actions secret
+                  import.meta.env.TMDB_API_KEY; // settings.env
+    
+    if (!apiKey) {
+      throw new Error("TMDB API key is not configured. Please check your environment variables.");
+    }
     
     const response = await fetch(
       `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchQuery}&page=${pageNum}&include_adult=true`
