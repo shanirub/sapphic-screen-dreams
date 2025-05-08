@@ -1,21 +1,32 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { movies } from '@/data/movieData';
 import { Button } from '@/components/ui/button';
 import { Play, Heart, Bookmark } from 'lucide-react';
 import CategoryRow from '@/components/CategoryRow';
+import { getMovieDetails, getLatestMovies } from '@/services/tmdb';
+import { Movie } from '@/types/movie';
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const movie = movies.find(m => m.id === id);
   const [showContent, setShowContent] = useState(false);
   
+  const { data: movie, isLoading: isLoadingMovie } = useQuery({
+    queryKey: ['movie', id],
+    queryFn: () => getMovieDetails(id!),
+    enabled: !!id,
+  });
+
+  const { data: latestMovies } = useQuery({
+    queryKey: ['latestMovies'],
+    queryFn: () => getLatestMovies(),
+  });
+  
   // Get recommended movies (similar genre)
-  const recommendedMovies = movie 
-    ? movies
+  const recommendedMovies = movie && latestMovies
+    ? latestMovies.results
         .filter(m => m.id !== movie.id && m.genres.some(g => movie.genres.includes(g)))
         .slice(0, 5)
     : [];
@@ -26,14 +37,12 @@ const MovieDetails = () => {
     window.scrollTo(0, 0);
   }, [id]);
   
-  if (!movie) {
+  if (isLoadingMovie || !movie) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Movie not found</h1>
-          <Link to="/">
-            <Button>Return to Home</Button>
-          </Link>
+          <div className="w-32 h-32 bg-muted rounded-full animate-pulse mx-auto mb-4" />
+          <div className="h-8 w-48 bg-muted rounded animate-pulse mx-auto" />
         </div>
       </div>
     );

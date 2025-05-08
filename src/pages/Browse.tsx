@@ -1,28 +1,33 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { movies, Movie } from '@/data/movieData';
 import { Button } from '@/components/ui/button';
+import { getLatestMovies } from '@/services/tmdb';
+import { Movie } from '@/types/movie';
 
 const Browse = () => {
   const [searchParams] = useSearchParams();
   const category = searchParams.get('category');
-  const [filteredMovies, setFilteredMovies] = useState<Movie[]>(movies);
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [showContent, setShowContent] = useState(false);
+  const [page, setPage] = useState(1);
   
-  // Available genres from all movies
-  const genres = Array.from(
-    new Set(movies.flatMap((movie) => movie.genres))
-  ).sort();
+  const { data: moviesData, isLoading } = useQuery({
+    queryKey: ['latestMovies', page],
+    queryFn: () => getLatestMovies(page),
+  });
+
+  // Get all unique genres from movies
+  const genres = moviesData?.results
+    ? Array.from(new Set(moviesData.results.flatMap(movie => movie.genres))).sort()
+    : [];
 
   useEffect(() => {
     // Filter based on URL parameter if provided
     if (category) {
       setActiveFilter(category);
-      filterMovies(category);
     }
     
     setShowContent(true);
@@ -31,24 +36,34 @@ const Browse = () => {
   const filterMovies = (filter: string) => {
     setActiveFilter(filter);
     if (filter === 'all') {
-      setFilteredMovies(movies);
       return;
     }
     
     // Handle film/series filter (in a real app, you'd have a type field)
     if (filter === 'films' || filter === 'series') {
       // For demo, we'll just return all movies since we don't have separate types
-      setFilteredMovies(movies);
       return;
     }
-    
-    // Filter by genre
-    const filtered = movies.filter(movie => 
-      movie.genres.includes(filter)
-    );
-    
-    setFilteredMovies(filtered);
   };
+
+  if (isLoading || !moviesData) {
+    return (
+      <main className="min-h-screen bg-background text-foreground pt-20">
+        <Navbar />
+        <div className="content-container py-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="aspect-[2/3] bg-muted rounded-md animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const filteredMovies = activeFilter === 'all'
+    ? moviesData.results
+    : moviesData.results.filter(movie => movie.genres.includes(activeFilter));
 
   return (
     <main className="min-h-screen bg-background text-foreground pt-20">
@@ -117,6 +132,25 @@ const Browse = () => {
               className="text-sapphic-pink"
             >
               View All Movies
+            </Button>
+          </div>
+        )}
+
+        {moviesData.total_pages > 1 && (
+          <div className="flex justify-center mt-8 gap-2">
+            <Button
+              variant="outline"
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              disabled={page === moviesData.total_pages}
+              onClick={() => setPage(p => Math.min(moviesData.total_pages, p + 1))}
+            >
+              Next
             </Button>
           </div>
         )}
